@@ -1,0 +1,6 @@
+# Core engine + data adapters: pure Python stdlib (no install needed).
+# Full-stack app (app.py) needs:
+fastapi
+uvicorn
+# Live data (optional — app runs on bundled snapshot without it):
+requests
