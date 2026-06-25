@@ -1,0 +1,1890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FootyModel — Transparent Football Forecasting</title>
+<style>
+/* ===== CSS Custom Properties ===== */
+:root {
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16213e;
+  --accent: #e94560;
+  --accent-secondary: #0f3460;
+  --text-primary: #eee;
+  --text-secondary: #a0a0b0;
+  --success: #00c853;
+  --warning: #ffd600;
+  --danger: #ff1744;
+  --card-bg: #1e2a45;
+  --border-color: #2a3a5e;
+  --input-bg: #12192e;
+  --hover-bg: #253555;
+  --transition-speed: 0.25s;
+}
+
+/* ===== Reset & Base ===== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ===== Layout ===== */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 20px;
+  width: 100%;
+}
+
+/* ===== Header ===== */
+header {
+  background: var(--bg-secondary);
+  border-bottom: 2px solid var(--accent);
+  padding: 20px 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 20px;
+  color: #fff;
+}
+
+.logo h1 {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+.tagline {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.api-config {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.api-config label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.api-config input {
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  width: 200px;
+  transition: border-color var(--transition-speed);
+}
+
+.api-config input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ===== Main Content ===== */
+main {
+  flex: 1;
+  padding: 28px 0;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 992px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .section-full {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ===== Cards ===== */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: box-shadow var(--transition-speed);
+}
+
+.card:hover {
+  box-shadow: 0 4px 20px rgba(233, 69, 96, 0.08);
+}
+
+.card-header {
+  background: var(--accent-secondary);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.card-header h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-header h2 .badge {
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--accent);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+/* ===== Form Elements ===== */
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.form-row .form-group {
+  flex: 1;
+  min-width: 140px;
+}
+
+select, input[type="text"], input[type="number"] {
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  border-radius: 5px;
+  font-size: 14px;
+  width: 100%;
+  transition: border-color var(--transition-speed);
+}
+
+select:focus, input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+select option {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+select:disabled, input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-speed);
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #d13d54;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--accent-secondary);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #1a4b7a;
+}
+
+.btn-success {
+  background: var(--success);
+  color: #111;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #00b848;
+  transform: translateY(-1px);
+}
+
+.btn-sm {
+  padding: 5px 12px;
+  font-size: 12px;
+}
+
+/* ===== Toggles ===== */
+.toggle-group {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.toggle-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.toggle-item input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* ===== Loading States ===== */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+  gap: 10px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== Error ===== */
+.error-msg {
+  background: rgba(255, 23, 68, 0.12);
+  border: 1px solid var(--danger);
+  border-radius: 6px;
+  padding: 12px 16px;
+  color: var(--danger);
+  font-size: 14px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.error-msg .err-icon {
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+/* ===== Status ===== */
+.status-msg {
+  background: rgba(0, 200, 83, 0.1);
+  border: 1px solid var(--success);
+  border-radius: 6px;
+  padding: 12px 16px;
+  color: var(--success);
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+/* ===== Tables ===== */
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+thead th {
+  background: var(--accent-secondary);
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+}
+
+thead th:hover {
+  color: var(--text-primary);
+}
+
+thead th .sort-arrow {
+  margin-left: 4px;
+  opacity: 0.4;
+}
+
+thead th.active-sort .sort-arrow {
+  opacity: 1;
+  color: var(--accent);
+}
+
+tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: background var(--transition-speed);
+}
+
+tbody tr:hover {
+  background: var(--hover-bg);
+}
+
+tbody td {
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+/* Rating tier colors */
+.rating-gold { color: #ffd700; font-weight: 700; }
+.rating-silver { color: #c0c0c0; font-weight: 600; }
+.rating-default { color: var(--text-primary); }
+
+/* ===== Metrics Display ===== */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.metric-card {
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+}
+
+.metric-card .metric-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.metric-card .metric-value.good { color: var(--success); }
+.metric-card .metric-value.warn { color: var(--warning); }
+.metric-card .metric-value.bad { color: var(--danger); }
+
+.metric-card .metric-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* ===== Probability Bars ===== */
+.prob-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.prob-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.prob-bar-label {
+  width: 24px;
+  font-weight: 700;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.prob-bar-track {
+  flex: 1;
+  height: 28px;
+  background: var(--input-bg);
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+}
+
+.prob-bar-fill {
+  height: 100%;
+  border-radius: 14px;
+  transition: width 0.6s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 40px;
+}
+
+.prob-bar-fill.home { background: linear-gradient(90deg, var(--success), #69f0ae); }
+.prob-bar-fill.draw { background: linear-gradient(90deg, var(--warning), #ffe066); color: #222; }
+.prob-bar-fill.away { background: linear-gradient(90deg, var(--danger), #ff5252); }
+
+.prob-bar-value {
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 50px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ===== xG Display ===== */
+.xg-display {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  align-items: center;
+  margin: 16px 0;
+  text-align: center;
+}
+
+.xg-team {
+  padding: 10px;
+  background: var(--input-bg);
+  border-radius: 8px;
+}
+
+.xg-team .xg-team-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.xg-team .xg-value {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.xg-vs {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* ===== Scoreline Table ===== */
+.scoreline-table {
+  width: 100%;
+  font-size: 13px;
+}
+
+.scoreline-table th {
+  background: var(--input-bg);
+  padding: 6px 10px;
+  font-size: 11px;
+}
+
+.scoreline-table td {
+  padding: 6px 10px;
+}
+
+.scoreline-table tr:nth-child(even) td {
+  background: rgba(255,255,255,0.02);
+}
+
+/* ===== Charts (Canvas containers) ===== */
+.chart-container {
+  width: 100%;
+  max-height: 320px;
+  margin: 12px 0;
+  position: relative;
+}
+
+.chart-container canvas {
+  width: 100% !important;
+  height: auto !important;
+  max-height: 300px;
+}
+
+/* ===== Context info ===== */
+.context-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.context-item {
+  background: var(--input-bg);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.context-item .ctx-label {
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.context-item .ctx-value {
+  font-weight: 600;
+}
+
+/* ===== Champion Pct Bar ===== */
+.champ-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 13px;
+}
+
+.champ-bar .team-name {
+  min-width: 140px;
+  font-weight: 600;
+}
+
+.champ-bar .bar-track {
+  flex: 1;
+  height: 18px;
+  background: var(--input-bg);
+  border-radius: 9px;
+  overflow: hidden;
+  position: relative;
+}
+
+.champ-bar .bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #ff6b81);
+  border-radius: 9px;
+  transition: width 0.6s ease;
+  min-width: 2px;
+}
+
+.champ-bar .bar-pct {
+  min-width: 48px;
+  text-align: right;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* ===== Footer ===== */
+footer {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  padding: 20px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: auto;
+}
+
+footer strong {
+  color: var(--accent);
+}
+
+/* ===== Transitions ===== */
+.fade-in {
+  animation: fadeIn 0.35s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Empty State ===== */
+.empty-state {
+  text-align: center;
+  padding: 30px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-state .empty-icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+  opacity: 0.4;
+}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-secondary); }
+
+/* ===== Sim Output area ===== */
+.sim-result-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 600px) {
+  .sim-result-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.outcome-card {
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.outcome-card .outcome-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.outcome-card .outcome-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.outcome-card .outcome-value.success { color: var(--success); }
+.outcome-card .outcome-value.danger { color: var(--danger); }
+.outcome-card .outcome-value.warning { color: var(--warning); }
+
+/* ===== Tab within card ===== */
+.tab-bar {
+  display: flex;
+  background: var(--input-bg);
+  border-radius: 6px;
+  padding: 3px;
+  margin-bottom: 14px;
+}
+
+.tab-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all var(--transition-speed);
+}
+
+.tab-btn.active {
+  background: var(--accent-secondary);
+  color: var(--text-primary);
+}
+
+.tab-btn:hover:not(.active) {
+  color: var(--text-primary);
+}
+
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <div class="container header-inner">
+    <div class="logo">
+      <div class="logo-icon">FM</div>
+      <div>
+        <h1>FootyModel</h1>
+        <div class="tagline">Transparent football forecasting — analysis tool, not betting edge</div>
+      </div>
+    </div>
+    <div class="api-config">
+      <label for="apiBase">API URL</label>
+      <input type="text" id="apiBase" value="http://localhost:8000" placeholder="http://localhost:8000">
+    </div>
+  </div>
+</header>
+
+<!-- ===== MAIN ===== -->
+<main>
+  <div class="container dashboard-grid">
+
+    <!-- SECTION 1: Load Competition -->
+    <div class="section-full card" id="section-load">
+      <div class="card-header">
+        <h2>📊 Load Competition</h2>
+        <button class="btn btn-sm btn-secondary" onclick="refreshCatalog()">🔄 Refresh Catalog</button>
+      </div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="compSelect">Competition</label>
+            <select id="compSelect">
+              <option value="">— Select competition —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="seasonSelect">Season</label>
+            <select id="seasonSelect">
+              <option value="">— Select season —</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex: 0 0 auto;">
+            <button class="btn btn-primary" id="loadBtn" onclick="loadCompetition()">⬇ Load</button>
+          </div>
+        </div>
+        <div id="loadResult"></div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: Team Ratings -->
+    <div class="section-full card" id="section-ratings">
+      <div class="card-header">
+        <h2>🏆 Team Ratings</h2>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span id="ratingsContext" style="font-size:12px;color:var(--text-secondary);"></span>
+          <button class="btn btn-sm btn-secondary" onclick="refreshRatings()" id="refreshRatingsBtn" disabled>🔄 Refresh</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="ratingsContent">
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <p>Load a competition above to see team ratings.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: Match Predictor -->
+    <div class="card" id="section-predict">
+      <div class="card-header">
+        <h2>🔮 Match Predictor</h2>
+      </div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="homeTeam">Home Team</label>
+            <select id="homeTeam"><option value="">— Select —</option></select>
+          </div>
+          <div class="form-group">
+            <label for="awayTeam">Away Team</label>
+            <select id="awayTeam"><option value="">— Select —</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="flex: 0 0 auto;">
+            <label class="toggle-item" style="margin-top:18px;">
+              <input type="checkbox" id="neutralVenue"> Neutral Venue
+            </label>
+          </div>
+          <div class="form-group">
+            <label for="heatSlider">Heat Adjustment (0-100%)</label>
+            <input type="range" id="heatSlider" min="0" max="100" value="0" style="width:100%;accent-color:var(--accent);">
+            <span id="heatValue" style="font-size:12px;color:var(--text-secondary);">0%</span>
+          </div>
+          <div class="form-group">
+            <label for="altitudeSelect">Altitude</label>
+            <select id="altitudeSelect">
+              <option value="sea">Sea Level</option>
+              <option value="low">Low (&lt;500m)</option>
+              <option value="medium">Medium (500-1500m)</option>
+              <option value="high">High (&gt;1500m)</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="predictBtn" onclick="predictMatch()">🎯 Predict</button>
+        <div id="predictResult" style="margin-top:16px;"></div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: Simulator -->
+    <div class="card" id="section-sim">
+      <div class="card-header">
+        <h2>📈 Competition Simulator</h2>
+      </div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group" style="flex: 2;">
+            <label for="simComp">Competition</label>
+            <select id="simComp"><option value="">— Load a comp first —</option></select>
+          </div>
+          <div class="form-group">
+            <label for="simFormat">Format</label>
+            <select id="simFormat">
+              <option value="league">League</option>
+              <option value="knockout">Knockout</option>
+              <option value="group_knockout">Group + Knockout</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="simRuns">Simulations</label>
+            <input type="number" id="simRuns" value="10000" min="100" max="100000" step="100">
+          </div>
+          <div class="form-group" style="flex: 0 0 auto;">
+            <button class="btn btn-success" id="simBtn" onclick="runSimulation()">▶ Run</button>
+          </div>
+        </div>
+        <div id="simResult" style="margin-top:16px;"></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="container">
+    <p><strong>Built for analysis.</strong> Not betting advice. Judge by out-of-sample calibration. Garbage in, garbage out.</p>
+  </div>
+</footer>
+
+<script>
+/* ===================================================================
+   FootyModel — Frontend Application
+   =================================================================== */
+
+/* ---------- State ---------- */
+const state = {
+  catalog: [],
+  teams: [],          // team ratings after loading
+  loadedComp: null,   // { code, season }
+  backtestMetrics: null,
+  selectedHomeTeam: null,
+  selectedAwayTeam: null,
+};
+
+/* ---------- Helpers ---------- */
+function getBase() {
+  const el = document.getElementById('apiBase');
+  return el.value.replace(/\/+$/, '');
+}
+
+function apiUrl(path) {
+  return getBase() + path;
+}
+
+async function apiFetch(path, options = {}) {
+  const url = apiUrl(path);
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json', ...options.headers },
+    ...options,
+  });
+  if (!res.ok) {
+    let detail = '';
+    try {
+      const err = await res.json();
+      detail = err.detail || err.message || JSON.stringify(err);
+    } catch (e) {
+      detail = res.statusText || `HTTP ${res.status}`;
+    }
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+function showError(el, msg) {
+  el.innerHTML = `<div class="error-msg fade-in"><span class="err-icon">⚠</span> ${escapeHtml(msg)}</div>`;
+}
+
+function showLoading(el, msg = 'Loading...') {
+  el.innerHTML = `<div class="loading"><div class="spinner"></div> ${escapeHtml(msg)}</div>`;
+}
+
+function showEmpty(el, icon, msg) {
+  el.innerHTML = `<div class="empty-state"><div class="empty-icon">${escapeHtml(icon)}</div><p>${escapeHtml(msg)}</p></div>`;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function round2(v) {
+  return Math.round(v * 100) / 100;
+}
+
+function pct(v) {
+  return (v * 100).toFixed(1) + '%';
+}
+
+/* ---------- Catalog ---------- */
+async function refreshCatalog() {
+  const sel = document.getElementById('compSelect');
+  const seasonSel = document.getElementById('seasonSelect');
+  sel.innerHTML = '<option value="">— Loading... —</option>';
+  seasonSel.innerHTML = '<option value="">— Select season —</option>';
+
+  try {
+    const data = await apiFetch('/catalog');
+    state.catalog = Array.isArray(data) ? data : (data.competitions || []);
+    renderCatalog();
+  } catch (err) {
+    sel.innerHTML = '<option value="">— Load error —</option>';
+    showError(document.getElementById('loadResult'), 'Failed to load catalog: ' + err.message);
+  }
+}
+
+function renderCatalog() {
+  const sel = document.getElementById('compSelect');
+  sel.innerHTML = '<option value="">— Select competition —</option>';
+
+  if (state.catalog.length === 0) {
+    sel.innerHTML += '<option value="" disabled>No competitions available</option>';
+    return;
+  }
+
+  for (const comp of state.catalog) {
+    const opt = document.createElement('option');
+    opt.value = comp.code || comp.name || comp;
+    opt.textContent = comp.name || comp.code || comp;
+    sel.appendChild(opt);
+  }
+
+  // Auto-populate sim comp select too
+  populateSimCompSelect();
+  populateTeamSelects();
+}
+
+function populateSimCompSelect() {
+  const sel = document.getElementById('simComp');
+  sel.innerHTML = '<option value="">— Select competition —</option>';
+  for (const comp of state.catalog) {
+    const opt = document.createElement('option');
+    opt.value = comp.code || comp.name || comp;
+    opt.textContent = (comp.name || comp.code || comp) + (state.loadedComp && state.loadedComp.code === (comp.code || comp.name || comp) ? ' ✅' : '');
+    sel.appendChild(opt);
+  }
+}
+
+function populateTeamSelects() {
+  const home = document.getElementById('homeTeam');
+  const away = document.getElementById('awayTeam');
+  home.innerHTML = '<option value="">— Select home team —</option>';
+  away.innerHTML = '<option value="">— Select away team —</option>';
+
+  for (const t of state.teams) {
+    const name = t.team || t.name || t.Team || '';
+    if (!name) continue;
+    home.innerHTML += `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
+    away.innerHTML += `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
+  }
+}
+
+// When competition is selected, populate seasons
+document.getElementById('compSelect').addEventListener('change', function() {
+  const code = this.value;
+  const seasonSel = document.getElementById('seasonSelect');
+  seasonSel.innerHTML = '<option value="">— Select season —</option>';
+
+  if (!code) return;
+  const comp = state.catalog.find(c => (c.code || c.name || c) === code);
+  if (comp && comp.seasons && Array.isArray(comp.seasons)) {
+    for (const s of comp.seasons) {
+      const opt = document.createElement('option');
+      opt.value = typeof s === 'object' ? (s.season || s.name || s) : s;
+      opt.textContent = typeof s === 'object' ? (s.label || s.season || s.name || s) : s;
+      seasonSel.appendChild(opt);
+    }
+  } else {
+    // Fallback: common seasons
+    const yr = new Date().getFullYear();
+    for (let y = yr; y >= yr - 5; y--) {
+      const s = `${y-1}/${String(y).slice(2)}`;
+      seasonSel.innerHTML += `<option value="${s}">${s}</option>`;
+    }
+  }
+});
+
+/* ---------- Load Competition ---------- */
+async function loadCompetition() {
+  const comp = document.getElementById('compSelect').value;
+  const season = document.getElementById('seasonSelect').value;
+  const loadBtn = document.getElementById('loadBtn');
+  const resultEl = document.getElementById('loadResult');
+
+  if (!comp || !season) {
+    showError(resultEl, 'Please select both a competition and a season.');
+    return;
+  }
+
+  loadBtn.disabled = true;
+  showLoading(resultEl, 'Loading competition and computing ratings...');
+
+  try {
+    const data = await apiFetch('/load', {
+      method: 'POST',
+      body: JSON.stringify({ code: comp, season: season }),
+    });
+
+    // Parse response
+    const ratings = data.team_ratings || data.ratings || data.teams || [];
+    const metrics = data.backtest_metrics || data.metrics || null;
+
+    state.teams = ratings;
+    state.backtestMetrics = metrics;
+    state.loadedComp = { code: comp, season };
+
+    // Render results
+    renderLoadResult(resultEl, metrics);
+    renderRatings();
+    populateTeamSelects();
+    populateSimCompSelect();
+
+    // Show success
+    resultEl.innerHTML = `<div class="status-msg fade-in">✅ Loaded ${ratings.length} teams from ${comp} (${season})</div>` + resultEl.innerHTML;
+
+  } catch (err) {
+    showError(resultEl, 'Failed to load competition: ' + err.message);
+  } finally {
+    loadBtn.disabled = false;
+  }
+}
+
+function renderLoadResult(el, metrics) {
+  if (!metrics) {
+    el.innerHTML += '<div class="empty-state" style="padding:10px;"><p>No backtest metrics available for this competition.</p></div>';
+    return;
+  }
+
+  const brier = metrics.brier !== undefined ? metrics.brier : metrics.brier_score;
+  const logloss = metrics.log_loss !== undefined ? metrics.log_loss : metrics.logloss;
+  const calib = metrics.calibration !== undefined ? metrics.calibration : metrics.calibration_slope;
+  const matches = metrics.matches || metrics.n_matches || metrics.count || '—';
+
+  const brierClass = brier <= 0.21 ? 'good' : brier <= 0.25 ? 'warn' : 'bad';
+  const calibClass = calib >= 0.9 && calib <= 1.1 ? 'good' : calib >= 0.8 && calib <= 1.2 ? 'warn' : 'bad';
+
+  // Calibration bins for chart
+  const calibBins = metrics.calibration_points || metrics.calibration_bins || metrics.bins || metrics.calibration_data || null;
+
+  el.innerHTML = `
+    <div class="metrics-grid fade-in">
+      <div class="metric-card">
+        <div class="metric-value ${brierClass}">${brier !== undefined ? round2(brier) : '—'}</div>
+        <div class="metric-label">Brier Score</div>
+        <div style="font-size:10px;color:var(--text-secondary);">Target: ≤0.21</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">${logloss !== undefined ? round2(logloss) : '—'}</div>
+        <div class="metric-label">Log Loss</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value ${calibClass}">${calib !== undefined ? round2(calib) : '—'}</div>
+        <div class="metric-label">Calibration Slope</div>
+        <div style="font-size:10px;color:var(--text-secondary);">Target: 0.9–1.1</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">${matches}</div>
+        <div class="metric-label">Matches Analyzed</div>
+      </div>
+    </div>
+  `;
+
+  // Calibration curve chart
+  if (calibBins) {
+    const chartContainer = document.createElement('div');
+    chartContainer.className = 'chart-container';
+    chartContainer.style.maxHeight = '220px';
+    const canvas = document.createElement('canvas');
+    canvas.id = 'calibChart';
+    canvas.width = 400;
+    canvas.height = 200;
+    chartContainer.appendChild(canvas);
+    el.appendChild(chartContainer);
+    drawCalibrationChart(canvas, calibBins);
+  }
+
+  // Load into ratings and enable refresh
+  document.getElementById('refreshRatingsBtn').disabled = false;
+}
+
+function drawCalibrationChart(canvas, bins) {
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  const pad = { left: 50, right: 20, top: 25, bottom: 35 };
+  const chartW = w - pad.left - pad.right;
+  const chartH = h - pad.top - pad.bottom;
+
+  // Expect bins as array of { bin: 0.1-1.0, freq: 0.xx, count: N }
+  // or array of { bin: 0.1-1.0, predicted: 0.xx, actual: 0.xx, count: N }
+  let binData = [];
+  if (Array.isArray(bins)) {
+    binData = bins.map(b => ({
+      predicted: b.bin || b.predicted || 0,
+      actual: b.freq !== undefined ? b.freq : (b.actual || 0),
+      count: b.count || 0
+    }));
+  } else if (bins.bins) {
+    binData = bins.bins.map(b => ({
+      predicted: b.bin || b.predicted || 0,
+      actual: b.freq !== undefined ? b.freq : (b.actual || 0),
+      count: b.count || 0
+    }));
+  } else if (bins.Predicted && bins.Actual) {
+    for (let i = 0; i < Math.max(bins.Predicted.length, bins.Actual.length); i++) {
+      binData.push({
+        predicted: bins.Predicted[i] || (i+1)/10,
+        actual: bins.Actual[i] || 0,
+        count: 0
+      });
+    }
+  }
+
+  if (binData.length === 0) return;
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.strokeStyle = 'var(--border-color)';
+  ctx.lineWidth = 1;
+  ctx.fillStyle = 'var(--text-secondary)';
+  ctx.font = '10px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+
+  // Axes
+  ctx.beginPath();
+  ctx.moveTo(pad.left, pad.top);
+  ctx.lineTo(pad.left, pad.top + chartH);
+  ctx.lineTo(pad.left + chartW, pad.top + chartH);
+  ctx.stroke();
+
+  // Perfect calibration diagonal
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(pad.left, pad.top + chartH);
+  ctx.lineTo(pad.left + chartW, pad.top);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Labels
+  ctx.fillStyle = 'var(--text-secondary)';
+  ctx.font = '10px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Predicted Probability', pad.left + chartW/2, h - 4);
+  ctx.save();
+  ctx.translate(12, pad.top + chartH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText('Observed Frequency', 0, 0);
+  ctx.restore();
+
+  // Bar chart: for each bin, draw actual frequency bar at predicted position
+  const maxBin = Math.max(...binData.map(b => b.predicted !== undefined ? b.predicted : (b.bin || b.Predicted || 0.5)), 0.5);
+  const barW = Math.max(6, (chartW / binData.length) - 3);
+
+  for (let i = 0; i < binData.length; i++) {
+    const b = binData[i];
+    const predicted = b.predicted !== undefined ? b.predicted : (b.bin || b.Predicted || 0);
+    const actual = b.actual !== undefined ? b.actual : (b.Actual || 0);
+    const x = pad.left + (predicted / maxBin) * chartW - barW/2;
+    const barH = (actual / 1.0) * chartH;
+    const y = pad.top + chartH - barH;
+
+    // Bar with gradient
+    const gradient = ctx.createLinearGradient(x, y, x, pad.top + chartH);
+    if (Math.abs(actual - predicted) < 0.05) {
+      gradient.addColorStop(0, '#00c853');
+      gradient.addColorStop(1, '#69f0ae');
+    } else if (actual > predicted) {
+      gradient.addColorStop(0, '#ffd600');
+      gradient.addColorStop(1, '#ffe57f');
+    } else {
+      gradient.addColorStop(0, '#ff1744');
+      gradient.addColorStop(1, '#ff5252');
+    }
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.roundRect(x, y, barW, barH, [2, 2, 0, 0]);
+    ctx.fill();
+
+    // X axis tick
+    ctx.fillStyle = 'var(--text-secondary)';
+    ctx.font = '8px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText((predicted * 100).toFixed(0) + '%', x + barW/2, pad.top + chartH + 12);
+  }
+}
+
+/* ---------- Team Ratings ---------- */
+let ratingsSortCol = -1;
+let ratingsSortAsc = true;
+
+function renderRatings() {
+  const el = document.getElementById('ratingsContent');
+  const ctx = document.getElementById('ratingsContext');
+  const refreshBtn = document.getElementById('refreshRatingsBtn');
+
+  if (!state.teams || state.teams.length === 0) {
+    showEmpty(el, '📋', 'Load a competition above to see team ratings.');
+    ctx.textContent = '';
+    if (refreshBtn) refreshBtn.disabled = true;
+    return;
+  }
+
+  ctx.textContent = `${state.teams.length} teams · ${state.loadedComp ? state.loadedComp.code + ' ' + state.loadedComp.season : ''}`;
+  if (refreshBtn) refreshBtn.disabled = false;
+
+  let html = '<div class="table-container"><table><thead><tr>';
+  const cols = [
+    { key: 'team', label: 'Team', map: t => t.team || t.name || t.Team || '' },
+    { key: 'blended', label: 'Blended Rating', map: t => t.blended || t.blended_rating || t.rating || 1500 },
+    { key: 'resultsElo', label: 'Results Elo', map: t => t.results_elo || t.elo_results || t.results || 1500 },
+    { key: 'xgElo', label: 'xG Elo', map: t => t.xg_elo || t.elo_xg || t.xG || 1500 },
+    { key: 'matches', label: 'Matches', map: t => t.matches || t.games || t.n || 0 },
+  ];
+
+  cols.forEach((col, i) => {
+    const active = i === ratingsSortCol;
+    html += `<th class="${active ? 'active-sort' : ''}" data-col="${i}">${col.label}<span class="sort-arrow">${active ? (ratingsSortAsc ? ' ▲' : ' ▼') : ' ⇅'}</span></th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  const sorted = [...state.teams].sort((a, b) => {
+    const col = cols[ratingsSortCol >= 0 ? ratingsSortCol : 0];
+    const va = col.map(a);
+    const vb = col.map(b);
+    const cmp = typeof va === 'number' ? va - vb : String(va).localeCompare(String(vb));
+    return ratingsSortAsc ? cmp : -cmp;
+  });
+
+  for (const t of sorted) {
+    const name = t.team || t.name || t.Team || '';
+    const blended = t.blended || t.blended_rating || t.rating || 1500;
+    const rElo = t.results_elo || t.elo_results || t.results || 1500;
+    const xElo = t.xg_elo || t.elo_xg || t.xG || 1500;
+    const matches = t.matches || t.games || t.n || 0;
+
+    // Gold ≥ 1800, Silver ≥ 1600, default otherwise
+    let ratingClass = 'rating-default';
+    if (blended >= 1800) ratingClass = 'rating-gold';
+    else if (blended >= 1600) ratingClass = 'rating-silver';
+
+    html += `<tr>
+      <td><strong>${escapeHtml(name)}</strong></td>
+      <td class="${ratingClass}">${round2(blended)}</td>
+      <td>${round2(rElo)}</td>
+      <td>${round2(xElo)}</td>
+      <td>${matches}</td>
+    </tr>`;
+  }
+
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+
+  // Add click handlers for sorting
+  el.querySelectorAll('thead th').forEach((th, i) => {
+    th.addEventListener('click', () => {
+      if (ratingsSortCol === i) {
+        ratingsSortAsc = !ratingsSortAsc;
+      } else {
+        ratingsSortCol = i;
+        ratingsSortAsc = true;
+      }
+      renderRatings();
+    });
+  });
+}
+
+/* ---------- Refresh Ratings ---------- */
+async function refreshRatings() {
+  const refreshBtn = document.getElementById('refreshRatingsBtn');
+  const el = document.getElementById('ratingsContent');
+
+  if (!state.loadedComp) return;
+
+  refreshBtn.disabled = true;
+  showLoading(el, 'Refreshing ratings...');
+
+  try {
+    const data = await apiFetch('/ratings/' + encodeURIComponent(state.loadedComp.code));
+    const ratings = Array.isArray(data) ? data : (data.ratings || data.teams || []);
+    if (ratings.length > 0) {
+      state.teams = ratings;
+    }
+    renderRatings();
+  } catch (err) {
+    showError(document.getElementById('ratingsContent'), 'Failed to refresh ratings: ' + err.message);
+  } finally {
+    refreshBtn.disabled = false;
+  }
+}
+
+/* ---------- Match Predictor ---------- */
+// Heat slider value display
+document.addEventListener('DOMContentLoaded', function() {
+  const heatSlider = document.getElementById('heatSlider');
+  const heatValue = document.getElementById('heatValue');
+  if (heatSlider && heatValue) {
+    heatSlider.addEventListener('input', function() {
+      heatValue.textContent = this.value + '%';
+    });
+  }
+});
+
+async function predictMatch() {
+  const home = document.getElementById('homeTeam').value;
+  const away = document.getElementById('awayTeam').value;
+  const neutral = document.getElementById('neutralVenue').checked;
+  // Heat slider 0-100% maps to 20-40°C (base to extreme)
+  const heatSlider = parseInt(document.getElementById('heatSlider').value);
+  const heat = 20 + (heatSlider / 100) * 20; // 20°C base, +20°C at 100%
+  // Altitude dropdown to meters
+  const altMap = { 'sea': 0, 'low': 250, 'medium': 1000, 'high': 2000 };
+  const altitude = altMap[document.getElementById('altitudeSelect').value] || 0;
+  const predictBtn = document.getElementById('predictBtn');
+  const resultEl = document.getElementById('predictResult');
+
+  if (!home || !away) {
+    showError(resultEl, 'Please select both home and away teams.');
+    return;
+  }
+  if (home === away) {
+    showError(resultEl, 'A team cannot play itself.');
+    return;
+  }
+
+  predictBtn.disabled = true;
+  showLoading(resultEl, 'Calculating prediction...');
+
+  try {
+    const data = await apiFetch('/predict', {
+      method: 'POST',
+      body: JSON.stringify({
+        home: home,
+        away: away,
+        neutral: neutral,
+        heat: heat,
+        altitude: altitude,
+      }),
+    });
+
+    renderPrediction(resultEl, data, home, away);
+
+  } catch (err) {
+    showError(resultEl, 'Prediction failed: ' + err.message);
+  } finally {
+    predictBtn.disabled = false;
+  }
+}
+
+function renderPrediction(el, data, homeName, awayName) {
+  const h = data.h || data.home || data[1] || 0;
+  const d = data.X || data.draw || data[0] || 0;
+  const a = data.a || data.away || data[2] || 0;
+  const egh = data.egh || data.expected_goals_home || data.xg_home || 0;
+  const ega = data.ega || data.expected_goals_away || data.xg_away || 0;
+  const scorelines = data.scorelines || data.scoreline_probs || data.top_scorelines || [];
+
+  const homePct = (h * 100).toFixed(1);
+  const drawPct = (d * 100).toFixed(1);
+  const awayPct = (a * 100).toFixed(1);
+
+  let html = `<div class="fade-in">`;
+
+  // 1X2 bars
+  html += `<div class="prob-bars">
+    <div class="prob-bar-item">
+      <span class="prob-bar-label" style="color:var(--success);">1</span>
+      <div class="prob-bar-track">
+        <div class="prob-bar-fill home" style="width:${homePct}%;">${homePct}%</div>
+      </div>
+      <span class="prob-bar-value" style="color:var(--success);">${escapeHtml(homeName)}</span>
+    </div>
+    <div class="prob-bar-item">
+      <span class="prob-bar-label" style="color:var(--warning);">X</span>
+      <div class="prob-bar-track">
+        <div class="prob-bar-fill draw" style="width:${drawPct}%;">${drawPct}%</div>
+      </div>
+      <span class="prob-bar-value" style="color:var(--warning);">Draw</span>
+    </div>
+    <div class="prob-bar-item">
+      <span class="prob-bar-label" style="color:var(--danger);">2</span>
+      <div class="prob-bar-track">
+        <div class="prob-bar-fill away" style="width:${awayPct}%;">${awayPct}%</div>
+      </div>
+      <span class="prob-bar-value" style="color:var(--danger);">${escapeHtml(awayName)}</span>
+    </div>
+  </div>`;
+
+  // xG display
+  const maxEg = Math.max(egh, ega, 0.01);
+  html += `<div class="xg-display">
+    <div class="xg-team">
+      <div class="xg-team-name">${escapeHtml(homeName)}</div>
+      <div class="xg-value">${round2(egh)}</div>
+      <div style="font-size:10px;color:var(--text-secondary);">xG</div>
+    </div>
+    <div class="xg-vs">VS</div>
+    <div class="xg-team">
+      <div class="xg-team-name">${escapeHtml(awayName)}</div>
+      <div class="xg-value">${round2(ega)}</div>
+      <div style="font-size:10px;color:var(--text-secondary);">xG</div>
+    </div>
+  </div>`;
+
+  // Scoreline probabilities
+  if (scorelines && scorelines.length > 0) {
+    html += `<div style="margin-top:14px;"><h3 style="font-size:13px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Top Scorelines</h3>`;
+    if (Array.isArray(scorelines)) {
+      html += `<table class="scoreline-table"><thead><tr><th>Score</th><th>Probability</th></tr></thead><tbody>`;
+      const top = scorelines.slice(0, 5);
+      for (const sl of top) {
+        // Handle both [score, prob] array format and {score, prob} object format
+        let score = '', prob = 0;
+        if (Array.isArray(sl)) {
+          score = sl[0] || '';
+          prob = sl[1] || 0;
+        } else {
+          score = sl.score || (sl.home + '-' + sl.away) || sl.label || '';
+          prob = sl.prob || sl.probability || sl.pct || 0;
+        }
+        html += `<tr><td>${escapeHtml(String(score))}</td><td>${pct(prob)}</td></tr>`;
+      }
+      html += `</tbody></table>`;
+    }
+    html += `</div>`;
+  }
+
+  // Context info
+  const ctx = data.context || data.matchup || {};
+  html += `<div class="context-grid">
+    <div class="context-item">
+      <span class="ctx-label">Rest (Home)</span>
+      <span class="ctx-value">${ctx.rest_home !== undefined ? ctx.rest_home + ' days' : ctx.rest_days_h || '—'}</span>
+    </div>
+    <div class="context-item">
+      <span class="ctx-label">Rest (Away)</span>
+      <span class="ctx-value">${ctx.rest_away !== undefined ? ctx.rest_away + ' days' : ctx.rest_days_a || '—'}</span>
+    </div>
+    <div class="context-item">
+      <span class="ctx-label">Home Form</span>
+      <span class="ctx-value">${ctx.form_home || ctx.home_form || '—'}</span>
+    </div>
+    <div class="context-item">
+      <span class="ctx-label">Away Form</span>
+      <span class="ctx-value">${ctx.form_away || ctx.away_form || '—'}</span>
+    </div>
+  </div>`;
+
+  html += `</div>`;
+  el.innerHTML = html;
+
+  // Draw xG bar chart
+  const canvas = document.createElement('canvas');
+  canvas.id = 'xgChart';
+  canvas.width = 300;
+  canvas.height = 100;
+  const chartContainer = document.createElement('div');
+  chartContainer.className = 'chart-container';
+  chartContainer.style.maxHeight = '100px';
+  chartContainer.appendChild(canvas);
+  el.prepend(chartContainer);
+
+  drawXgChart(canvas, egh, ega, homeName, awayName);
+}
+
+function drawXgChart(canvas, egh, ega, home, away) {
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  const padding = 40;
+  const chartW = w - padding * 2;
+  const chartH = h - 30;
+  const maxVal = Math.max(egh, ega, 1) * 1.3;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Bars
+  const barW = chartW / 2 - 8;
+  const maxH = chartH - 10;
+
+  // Home bar
+  const hH = (egh / maxVal) * maxH;
+  const gradH = ctx.createLinearGradient(padding, chartH, padding, chartH - hH);
+  gradH.addColorStop(0, 'var(--accent)');
+  gradH.addColorStop(1, '#ff6b81');
+  ctx.fillStyle = gradH;
+  ctx.beginPath();
+  ctx.roundRect(padding, chartH - hH, barW, hH, [4, 4, 0, 0]);
+  ctx.fill();
+
+  // Away bar
+  const aH = (ega / maxVal) * maxH;
+  const gradA = ctx.createLinearGradient(padding + barW + 16, chartH, padding + barW + 16, chartH - aH);
+  gradA.addColorStop(0, 'var(--accent-secondary)');
+  gradA.addColorStop(1, '#1a5a9a');
+  ctx.fillStyle = gradA;
+  ctx.beginPath();
+  ctx.roundRect(padding + barW + 16, chartH - aH, barW, aH, [4, 4, 0, 0]);
+  ctx.fill();
+
+  // Labels
+  ctx.fillStyle = 'var(--text-primary)';
+  ctx.font = '11px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(escapeHtml(home), padding + barW / 2, chartH + 14);
+  ctx.fillText(escapeHtml(away), padding + barW * 1.5 + 16, chartH + 14);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 12px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(round2(egh), padding + barW / 2, chartH - hH - 6);
+  ctx.fillText(round2(ega), padding + barW * 1.5 + 16, chartH - aH - 6);
+
+  // Y axis line
+  ctx.strokeStyle = 'var(--border-color)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padding - 4, 5);
+  ctx.lineTo(padding - 4, chartH);
+  ctx.stroke();
+}
+
+/* ---------- Simulation ---------- */
+async function runSimulation() {
+  const code = document.getElementById('simComp').value;
+  const format = document.getElementById('simFormat').value;
+  const runs = parseInt(document.getElementById('simRuns').value) || 10000;
+  const simBtn = document.getElementById('simBtn');
+  const resultEl = document.getElementById('simResult');
+
+  if (!code) {
+    showError(resultEl, 'Please select a competition to simulate.');
+    return;
+  }
+
+  simBtn.disabled = true;
+  showLoading(resultEl, `Running ${runs.toLocaleString()} simulations...`);
+
+  try {
+    const data = await apiFetch('/simulate', {
+      method: 'POST',
+      body: JSON.stringify({
+        code: code,
+        format: format,
+        runs: runs,
+      }),
+    });
+
+    renderSimulation(resultEl, data, format);
+
+  } catch (err) {
+    showError(resultEl, 'Simulation failed: ' + err.message);
+  } finally {
+    simBtn.disabled = false;
+  }
+}
+
+function renderSimulation(el, data, format) {
+  // Top-level outcomes from teams array
+  const teamsArr = data.teams || data.standings || data.results || [];
+  const tableRows = data.table || [];
+
+  // Aggregate outcome pcts from teams array
+  let championPct = 0, top4Pct = 0, relegatedPct = 0, promotionPct = 0;
+  const champTeams = [...teamsArr].sort((a, b) => (b.champion_pct || 0) - (a.champion_pct || 0));
+
+  // Calculate overall champion probability max (for display)
+  if (champTeams.length > 0) {
+    championPct = champTeams.reduce((s, t) => s + (t.champion_pct || 0), 0);
+    top4Pct = champTeams.reduce((s, t) => s + (t.top4_pct || 0), 0) / champTeams.length;
+    relegatedPct = champTeams.reduce((s, t) => s + (t.relegated_pct || 0), 0) / champTeams.length;
+  }
+
+  const displayChampion = championPct > 0 ? championPct : (data.champion_pct || data.champion || data.winner_pct || 0);
+  const displayTop4 = top4Pct > 0 ? top4Pct : (data.top4_pct || data.top_four || data.top4 || 0);
+  const displayRelegation = relegatedPct > 0 ? relegatedPct : (data.relegation_pct || data.relegation || 0);
+  const displayPromotion = promotionPct > 0 ? promotionPct : (data.promotion_pct || data.promotion || 0);
+
+  let html = `<div class="fade-in">`;
+
+  // Outcomes
+  html += `<div class="sim-result-grid">
+    <div class="outcome-card">
+      <div class="outcome-value success">${displayChampion ? (typeof displayChampion === 'number' && displayChampion <= 1 ? pct(displayChampion) : (displayChampion + '%')) : '—'}</div>
+      <div class="outcome-label">Champion Probability</div>
+    </div>
+    <div class="outcome-card">
+      <div class="outcome-value ${displayTop4 && displayTop4 > 0.5 ? 'success' : 'warning'}">${displayTop4 ? (typeof displayTop4 === 'number' && displayTop4 <= 1 ? pct(displayTop4) : (displayTop4 + '%')) : '—'}</div>
+      <div class="outcome-label">Avg Top 4 Probability</div>
+    </div>`;
+
+  if (displayRelegation) {
+    html += `<div class="outcome-card">
+      <div class="outcome-value ${displayRelegation > 0.2 ? 'danger' : 'warning'}">${typeof displayRelegation === 'number' && displayRelegation <= 1 ? pct(displayRelegation) : (displayRelegation + '%')}</div>
+      <div class="outcome-label">Avg Relegation Probability</div>
+    </div>`;
+  }
+  if (displayPromotion) {
+    html += `<div class="outcome-card">
+      <div class="outcome-value success">${typeof displayPromotion === 'number' && displayPromotion <= 1 ? pct(displayPromotion) : (displayPromotion + '%')}</div>
+      <div class="outcome-label">Promotion Probability</div>
+    </div>`;
+  }
+
+  html += `</div>`;
+
+  // Champion probability bars for top teams
+  if (champTeams.length > 0) {
+    html += `<div style="margin-top:18px;"><h3 style="font-size:13px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Champion % — Top Teams</h3>`;
+
+    const maxPct = Math.max(...champTeams.map(t => t.champion_pct || 0), 0.001);
+    const top10 = champTeams.slice(0, 10);
+    for (const t of top10) {
+      const name = t.team || t.name || t.Team || '';
+      const p = t.champion_pct || 0;
+      const w = (p / maxPct) * 100;
+      html += `<div class="champ-bar">
+        <span class="team-name">${escapeHtml(String(name))}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(w, 2)}%;"></div></div>
+        <span class="bar-pct">${pct(p)}</span>
+      </div>`;
+    }
+    html += `</div>`;
+
+    // Draw bar chart for champion %
+    const champCanvas = document.createElement('canvas');
+    champCanvas.id = 'simChart';
+    champCanvas.width = 400;
+    champCanvas.height = Math.min(top10.length * 28, 240);
+    const chartCont = document.createElement('div');
+    chartCont.className = 'chart-container';
+    chartCont.style.maxHeight = '260px';
+    chartCont.appendChild(champCanvas);
+    el.appendChild(chartCont);
+
+    drawChampionChart(champCanvas, top10, maxPct);
+  }
+
+  // Full table
+  if (tableRows && tableRows.length > 0) {
+    html += `<div style="margin-top:14px;"><div class="tab-bar">
+      <button class="tab-btn active" onclick="showSimTab('standings')">Standings</button>
+      <button class="tab-btn" onclick="showSimTab('outcomes')">Outcomes</button>
+    </div>`;
+
+    // Check if table rows are objects or arrays
+    const isArrayTable = Array.isArray(tableRows[0]);
+    
+    html += `<div id="simStandings"><div class="table-container"><table><thead><tr>`;
+    if (isArrayTable) {
+      html += `<th>#</th><th>Team</th><th>Avg Pts</th>`;
+    } else {
+      html += `<th>#</th><th>Team</th><th>Pts</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th>`;
+    }
+    html += `</tr></thead><tbody>`;
+
+    for (let i = 0; i < tableRows.length; i++) {
+      const row = tableRows[i];
+      let rank, name, pts;
+      
+      if (isArrayTable) {
+        rank = row[0] || (i + 1);
+        name = row[1] || '';
+        pts = row[2] !== undefined ? row[2] : 0;
+        html += `<tr>
+          <td style="font-weight:700;">${rank}</td>
+          <td><strong>${escapeHtml(String(name))}</strong></td>
+          <td style="font-weight:700;color:var(--accent);">${typeof pts === 'number' ? round2(pts) : pts}</td>
+        </tr>`;
+      } else {
+        rank = i + 1;
+        name = row.team || row.name || row.Team || '';
+        pts = row.pts || row.points || row.Pts || 0;
+        const w = row.w || row.wins || row.W || 0;
+        const d = row.d || row.draws || row.D || 0;
+        const l = row.l || row.losses || row.L || 0;
+        const gf = row.gf || row.goals_for || row.GF || 0;
+        const ga = row.ga || row.goals_against || row.GA || 0;
+        const gd = gf - ga;
+        html += `<tr>
+          <td style="font-weight:700;">${rank}</td>
+          <td><strong>${escapeHtml(String(name))}</strong></td>
+          <td style="font-weight:700;color:var(--accent);">${pts}</td>
+          <td>${w}</td>
+          <td>${d}</td>
+          <td>${l}</td>
+          <td>${gf}</td>
+          <td>${ga}</td>
+          <td style="color:${gd > 0 ? 'var(--success)' : gd < 0 ? 'var(--danger)' : 'var(--text-secondary)'};">${gd > 0 ? '+' : ''}${gd}</td>
+        </tr>`;
+      }
+    }
+    html += `</tbody></table></div></div>`;
+
+    html += `<div id="simOutcomes" style="display:none;">
+      <div class="empty-state"><div class="empty-icon">📊</div><p>Team-by-team probabilities available in the champion % chart above.</p></div>
+    </div>`;
+
+    html += `</div>`;
+  }
+
+  el.innerHTML += html;
+}
+
+function showSimTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('simStandings').style.display = tab === 'standings' ? '' : 'none';
+  document.getElementById('simOutcomes').style.display = tab === 'outcomes' ? '' : 'none';
+  // highlight active
+  const btns = document.querySelectorAll('.tab-btn');
+  btns[tab === 'standings' ? 0 : 1].classList.add('active');
+}
+
+function drawChampionChart(canvas, teams, maxPct) {
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  const pad = { left: 120, right: 60, top: 8, bottom: 8 };
+  const chartW = w - pad.left - pad.right;
+  const barH = Math.min(22, (h - pad.top - pad.bottom) / teams.length - 2);
+
+  ctx.clearRect(0, 0, w, h);
+
+  const gradient = ctx.createLinearGradient(pad.left, 0, pad.left + chartW, 0);
+  gradient.addColorStop(0, 'var(--accent)');
+  gradient.addColorStop(1, '#ff6b81');
+
+  for (let i = 0; i < teams.length; i++) {
+    const t = teams[i];
+    const p = t.champion_pct || 0;
+    const y = pad.top + i * (barH + 3);
+    const barW = (p / maxPct) * chartW;
+
+    // Bar
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.roundRect(pad.left, y, Math.max(barW, 2), barH, [3, 3, 3, 3]);
+    ctx.fill();
+
+    // Label
+    ctx.fillStyle = 'var(--text-primary)';
+    ctx.font = '11px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    const name = t.team || t.name || t.Team || '';
+    ctx.fillText(name, pad.left - 6, y + barH / 2 + 4);
+
+    // Value
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px -apple-system, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(pct(p), pad.left + Math.max(barW, 2) + 4, y + barH / 2 + 4);
+  }
+}
+
+/* ---------- Initialization ---------- */
+document.addEventListener('DOMContentLoaded', function() {
+  // RoundRect polyfill for canvas
+  if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, radii) {
+      if (!Array.isArray(radii)) radii = [radii, radii, radii, radii];
+      const [tl, tr, br, bl] = radii.map(r => Math.min(r || 0, Math.min(w, h) / 2));
+      this.moveTo(x + tl, y);
+      this.lineTo(x + w - tr, y);
+      this.quadraticCurveTo(x + w, y, x + w, y + tr);
+      this.lineTo(x + w, y + h - br);
+      this.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+      this.lineTo(x + bl, y + h);
+      this.quadraticCurveTo(x, y + h, x, y + h - bl);
+      this.lineTo(x, y + tl);
+      this.quadraticCurveTo(x, y, x + tl, y);
+      this.closePath();
+      return this;
+    };
+  }
+
+  // Load catalog on startup
+  refreshCatalog();
+});
+
+</script>
+</body>
+</html>
