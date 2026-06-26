@@ -1,5 +1,5 @@
-run = "python main.py"
-entrypoint = "main.py"
+[[deployment]]
+run = ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
 
-[nix]
-channel = "stable-23_11"
+[env]
+PORT = "8080"
